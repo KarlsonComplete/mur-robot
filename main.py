@@ -7,39 +7,47 @@ prev_time = 0
 prev_error = 0.0
 
 
+def clamp_to180(angle):
+    if angle > 180.0:
+        return angle - 360
+    if angle < 180.0:
+        return angle + 360
+    return angle
+
+
 def clamp(v, max_v, min_v):
     if v > max_v:
         return max_v
     if v < min_v:
         return min_v
-
     return v
 
 
-def keep_depth(value):
+def keep_yaw(value):
     global prev_time
     global prev_error
 
     current_time = int(round(time.time() * 1000))
 
-    error = auv.get_depth() - value
+    error = auv.get_yaw() - value
+    error = clamp_to180(error)
 
-    power_2 = 0
-    power_3 = 0
+    power_0 = 0
+    power_1 = 0
 
-    power_value = error * 70
-    diff_value = 5 / (current_time - prev_time) * (error - prev_error)
+    power_value = error * 0.02
+    diff_value = 0.5 / (current_time - prev_time) * (error - prev_error)
 
-    power_2 = clamp(power_value + diff_value, 100, -100)
-    power_3 = clamp(power_value + diff_value, 100, -100)
+    power_0 = clamp(power_value + diff_value, 100, -100)
+    power_1 = clamp(power_value + diff_value, 100, -100)
 
-    auv.set_motor_power(2, power_2)
-    auv.set_motor_power(3, power_3)
+    auv.set_motor_power(0, -power_0)
+    auv.set_motor_power(1, power_1)
 
     prev_time = current_time
     prev_error = error
 
 
 while True:
-    keep_depth(2)
+    keep_yaw(-80)
     time.sleep(0.03)
