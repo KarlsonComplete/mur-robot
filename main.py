@@ -4,14 +4,6 @@ import time
 auv = mur.mur_init()
 
 
-def clamp_to180(angle):
-    if angle > 180.0:
-        return angle - 360
-    if angle < 180.0:
-        return angle + 360
-    return angle
-
-
 def clamp(v, max_v, min_v):
     if v > max_v:
         return max_v
@@ -50,15 +42,36 @@ def keep_depth(depth_to_set):
     try:
         error = auv.get_depth() - depth_to_set
         output = keep_depth.regulator.process(error)
-        output = clamp(output, 100 , -100)
+        output = clamp(output, 100, -100)
         auv.set_motor_power(2, output)
         auv.set_motor_power(3, output)
     except AttributeError:
         keep_depth.regulator = PD()
-        keep_depth.regulator.set_p_gain(50)
-        keep_depth.regulator.set_d_gain(2)
+        keep_depth.regulator.set_p_gain(90)
+        keep_depth.regulator.set_d_gain(30)
+
+
+def keep_yaw(yaw_to_set):
+    def clamp_to180(angle):
+        if angle > 180.0:
+            return angle - 360
+        if angle < 180.0:
+            return angle + 360
+        return angle
+    try:
+        error = auv.get_yaw() - yaw_to_set
+        error = clamp_to180(error)
+        output = keep_yaw.regulator.process(error)
+        output = clamp(output, 100, -100)
+        auv.set_motor_power(0, -output)
+        auv.set_motor_power(1, output)
+    except AttributeError:
+        keep_yaw.regulator = PD()
+        keep_yaw.regulator.set_p_gain(0.8)
+        keep_yaw.regulator.set_d_gain(0.3)
 
 
 while True:
     keep_depth(2)
+    keep_yaw(60)
     time.sleep(0.03)
