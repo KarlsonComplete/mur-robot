@@ -3,9 +3,6 @@ import time
 
 auv = mur.mur_init()
 
-prev_time = 0
-prev_error = 0.0
-
 
 def clamp_to180(angle):
     if angle > 180.0:
@@ -23,31 +20,45 @@ def clamp(v, max_v, min_v):
     return v
 
 
-def keep_yaw(value):
-    global prev_time
-    global prev_error
+class PD(object):
+    _kp = 0.0
+    _kd = 0.0
+    _prev_error = 0.0
+    _timestamp = 0.0
 
-    current_time = int(round(time.time() * 1000))
+    def __init__(self):
+        pass
 
-    error = auv.get_yaw() - value
-    error = clamp_to180(error)
+    # Метод для устанвоки пропорционального усиления
+    def set_p_gain(self, value):
+        self._kp = value
 
-    power_0 = 0
-    power_1 = 0
+    # Метод для устанвоки дифиринциального усиления
+    def set_d_gain(self, value):
+        self._kd = value
 
-    power_value = error * 0.02
-    diff_value = 0.5 / (current_time - prev_time) * (error - prev_error)
+    # Метод для расчета регулирующего воздействия
+    def process(self, error):
+        timestamp = int(round(time.time() * 1000))
+        output = self._kp * error + self._kd / (timestamp - self._timestamp) * (error - self._prev_error)
+        self._timestamp = timestamp
+        self._prev_error = error
+        return output
 
-    power_0 = clamp(power_value + diff_value, 100, -100)
-    power_1 = clamp(power_value + diff_value, 100, -100)
 
-    auv.set_motor_power(0, -power_0)
-    auv.set_motor_power(1, power_1)
-
-    prev_time = current_time
-    prev_error = error
+def keep_depth(depth_to_set):
+    try:
+        error = auv.get_depth() - depth_to_set
+        output = keep_depth.regulator.process(error)
+        output = clamp(output, 100 , -100)
+        auv.set_motor_power(2, output)
+        auv.set_motor_power(3, output)
+    except AttributeError:
+        keep_depth.regulator = PD()
+        keep_depth.regulator.set_p_gain(50)
+        keep_depth.regulator.set_d_gain(2)
 
 
 while True:
-    keep_yaw(-80)
+    keep_depth(2)
     time.sleep(0.03)
