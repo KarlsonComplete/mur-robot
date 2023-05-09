@@ -3,7 +3,9 @@ import cv2
 import pymurapi as mur
 import numpy as np
 
+
 auv = mur.mur_init()
+
 
 
 def binary_image():
@@ -21,16 +23,16 @@ def binary_image():
 
     if detected_circles is not None:
 
-        # Convert the circle parameters a, b and r to integers.
+        # Конвертируем параметры окружности a,b,r в целые числа.
         detected_circles = np.uint16(np.around(detected_circles))
 
         for pt in detected_circles[0, :]:
             center = (pt[0], pt[1])
 
-            # Draw the circumference of the circle.
+            # Рисуем окружность круга.
             cv.circle(image, center, 1, (0, 255, 0), 2)
 
-            # Draw a small circle (of radius 1) to show the center.
+            # Рисуем маленький круг(радиусом 1), чтобы отобразить центр.
             radius = pt[2]
             cv.circle(image, center, radius, (0, 0, 255), 3)
             cv2.imshow("Detected Circle", image)
@@ -40,25 +42,25 @@ def binary_image():
 
     """imageHSV = cv.cvtColor(image, cv.COLOR_BGR2HSV)
 
-    low_hsv_blue = (0, 50, 50)
-    max_hsv_blue = (30, 255, 255)
+    low_hsv_blue = (120, 50, 50)
+    max_hsv_blue = (150, 255, 255)
 
     blue_hsv_mask = cv.inRange(imageHSV, low_hsv_blue, max_hsv_blue)
 
     cnt, _ = cv.findContours(blue_hsv_mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
-    cv.drawContours(image, cnt, -1, (0, 0, 0), 2)"""
+    cv.drawContours(image, cnt, -1, (0, 0, 0), 2)
 
     # Обнаружение центра круга
 
-    """moments = cv.moments(cnt[0])
+    moments = cv.moments(cnt[0])
 
     x = moments["m10"] / moments["m00"]
     y = moments["m01"] / moments["m00"]
 
-    cv.circle(image, (int(x), int(y)), 4, (255, 0, 0), 3) """
+    cv.circle(image, (int(x), int(y)), 4, (255, 0, 0), 3)
 
-    """cv.imshow('cnt', image)
+    cv.imshow('cnt', image)
 
     cv.waitKey(5)"""
 
